@@ -1,11 +1,9 @@
-import { NavLink, useLocation } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  TrendingUp, 
-  TrendingDown, 
-  Tags,
-  Home
-} from "lucide-react";
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import clsx from "clsx";
+import { LayoutDashboard, TrendingUp, TrendingDown, Tags } from "lucide-react";
 
 import {
   Sidebar,
@@ -16,72 +14,61 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 
 const navigationItems = [
-  { 
-    title: "Dashboard", 
-    url: "/dashboard", 
-    icon: LayoutDashboard 
-  },
-  { 
-    title: "Income", 
-    url: "/dashboard/income", 
-    icon: TrendingUp 
-  },
-  { 
-    title: "Expenses", 
-    url: "/dashboard/expenses", 
-    icon: TrendingDown 
-  },
-  { 
-    title: "Categories", 
-    url: "/dashboard/categories", 
-    icon: Tags 
-  },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Income", url: "/dashboard/income", icon: TrendingUp },
+  { title: "Expenses", url: "/dashboard/expenses", icon: TrendingDown },
+  { title: "Categories", url: "/dashboard/categories", icon: Tags },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
-  const location = useLocation();
-  const currentPath = location.pathname;
+  const pathname = usePathname();
   const isCollapsed = state === "collapsed";
 
-  const isActive = (path: string) => currentPath === path;
-  const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive 
-      ? "bg-finance-primary/10 text-finance-primary font-medium border-r-2 border-finance-primary" 
-      : "hover:bg-muted/50 text-muted-foreground hover:text-foreground";
+  // Emula NavLink + end={url === "/dashboard"}
+  const isActive = (url: string) => {
+    const exact = url === "/dashboard";
+    return exact ? pathname === url : pathname.startsWith(url);
+  };
 
   return (
-    <Sidebar
-      className={isCollapsed ? "w-14" : "w-60"}
-      collapsible="icon"
-    >
+    <Sidebar className={isCollapsed ? "w-14" : "w-60"} collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-finance-primary font-semibold">
             FinanceTracker
           </SidebarGroupLabel>
-          
+
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={item.url} 
-                      end={item.url === "/dashboard"}
-                      className={getNavCls}
-                    >
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {!isCollapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {navigationItems.map((item) => {
+                const active = isActive(item.url);
+                const linkCls = clsx(
+                  "flex items-center",
+                  active
+                    ? "bg-finance-primary/10 text-finance-primary font-medium border-r-2 border-finance-primary"
+                    : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                );
+
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <Link
+                        href={item.url}
+                        aria-current={active ? "page" : undefined}
+                        className={linkCls}
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        {!isCollapsed && <span>{item.title}</span>}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
