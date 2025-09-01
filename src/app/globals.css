@@ -1,1 +1,214 @@
 @import "tailwindcss";
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Finance-themed color palette - Green money theme */
+    --background: 0 0% 98%;
+    --foreground: 157 20% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 157 20% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 157 20% 15%;
+
+    /* Primary green - money/finance theme */
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 98%;
+    --primary-glow: 142 76% 50%;
+
+    /* Secondary gold accent */
+    --secondary: 43 74% 66%;
+    --secondary-foreground: 157 20% 15%;
+
+    --muted: 142 15% 95%;
+    --muted-foreground: 157 10% 45%;
+
+    /* Accent emerald */
+    --accent: 160 84% 39%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 142 15% 88%;
+    --input: 142 15% 88%;
+    --ring: 142 76% 36%;
+
+    /* Finance-specific design tokens */
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(142 76% 36%),
+      hsl(142 76% 50%)
+    );
+    --gradient-hero: linear-gradient(
+      135deg,
+      hsl(142 76% 36%) 0%,
+      hsl(160 84% 39%) 50%,
+      hsl(43 74% 66%) 100%
+    );
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 98%), hsl(142 15% 95%));
+
+    /* Shadows with green tint */
+    --shadow-primary: 0 10px 30px -10px hsl(142 76% 36% / 0.3);
+    --shadow-glow: 0 0 40px hsl(142 76% 50% / 0.2);
+    --shadow-card: 0 4px 20px -4px hsl(142 76% 36% / 0.1);
+
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Dark theme for finance app */
+    --background: 157 20% 8%;
+    --foreground: 142 15% 85%;
+
+    --card: 157 20% 10%;
+    --card-foreground: 142 15% 85%;
+
+    --popover: 157 20% 10%;
+    --popover-foreground: 142 15% 85%;
+
+    --primary: 142 76% 50%;
+    --primary-foreground: 157 20% 8%;
+    --primary-glow: 142 76% 60%;
+
+    --secondary: 43 74% 56%;
+    --secondary-foreground: 157 20% 8%;
+
+    --muted: 157 15% 15%;
+    --muted-foreground: 142 10% 55%;
+
+    --accent: 160 84% 45%;
+    --accent-foreground: 157 20% 8%;
+
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 157 15% 18%;
+    --input: 157 15% 18%;
+    --ring: 142 76% 50%;
+
+    /* Dark theme gradients */
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(142 76% 50%),
+      hsl(142 76% 60%)
+    );
+    --gradient-hero: linear-gradient(
+      135deg,
+      hsl(142 76% 50%) 0%,
+      hsl(160 84% 45%) 50%,
+      hsl(43 74% 56%) 100%
+    );
+    --gradient-subtle: linear-gradient(
+      180deg,
+      hsl(157 20% 8%),
+      hsl(157 15% 15%)
+    );
+
+    --shadow-primary: 0 10px 30px -10px hsl(142 76% 50% / 0.4);
+    --shadow-glow: 0 0 40px hsl(142 76% 60% / 0.3);
+    --shadow-card: 0 4px 20px -4px hsl(142 76% 50% / 0.2);
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Mapea tus variables HSL a tokens que Tailwind entiende */
+/* === Tokens de color para Tailwind v4 === */
+@theme {
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-glow: hsl(var(--primary-glow));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  /* “sidebar.*” del config anterior */
+  --color-sidebar: hsl(var(--sidebar-background));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+
+  /* Sombras (para poder usar `shadow-primary`, etc.) */
+  --shadow-primary: var(--shadow-primary);
+  --shadow-glow: var(--shadow-glow);
+  --shadow-card: var(--shadow-card);
+}
+
+@layer utilities {
+  .bg-gradient-primary {
+    background-image: var(--gradient-primary);
+  }
+  .bg-gradient-hero {
+    background-image: var(--gradient-hero);
+  }
+  .bg-gradient-subtle {
+    background-image: var(--gradient-subtle);
+  }
+}
