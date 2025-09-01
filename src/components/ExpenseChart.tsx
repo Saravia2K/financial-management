@@ -1,20 +1,32 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 
 const monthlyData = [
-  { month: 'Jan', income: 4000, expenses: 3200 },
-  { month: 'Feb', income: 4100, expenses: 2900 },
-  { month: 'Mar', income: 4000, expenses: 3100 },
-  { month: 'Apr', income: 4200, expenses: 2850 },
+  { month: "Jan", income: 4000, expenses: 3200 },
+  { month: "Feb", income: 4100, expenses: 2900 },
+  { month: "Mar", income: 4000, expenses: 3100 },
+  { month: "Apr", income: 4200, expenses: 2850 },
 ];
 
 const expenseCategories = [
-  { name: 'Housing', value: 1200, color: 'hsl(var(--finance-primary))' },
-  { name: 'Food', value: 450, color: 'hsl(var(--finance-accent))' },
-  { name: 'Transport', value: 320, color: 'hsl(var(--finance-success))' },
-  { name: 'Entertainment', value: 280, color: 'hsl(var(--finance-warning))' },
-  { name: 'Utilities', value: 200, color: 'hsl(var(--finance-muted))' },
-  { name: 'Other', value: 400, color: 'hsl(var(--finance-secondary))' },
+  { name: "Housing", value: 1200, color: "hsl(var(--finance-primary))" },
+  { name: "Food", value: 450, color: "hsl(var(--finance-accent))" },
+  { name: "Transport", value: 320, color: "hsl(var(--finance-success))" },
+  { name: "Entertainment", value: 280, color: "hsl(var(--finance-warning))" },
+  { name: "Utilities", value: 200, color: "hsl(var(--finance-muted))" },
+  { name: "Other", value: 400, color: "hsl(var(--finance-secondary))" },
 ];
 
 export function ExpenseChart() {
@@ -25,32 +37,37 @@ export function ExpenseChart() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             Income vs Expenses
-            <span className="text-sm font-normal text-muted-foreground">Last 4 months</span>
+            <span className="text-sm font-normal text-muted-foreground">
+              Last 4 months
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <BarChart
+              data={monthlyData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            >
               <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-              <XAxis 
-                dataKey="month" 
+              <XAxis
+                dataKey="month"
                 className="text-xs"
-                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                tick={{ fill: "hsl(var(--muted-foreground))" }}
               />
-              <YAxis 
+              <YAxis
                 className="text-xs"
-                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                tick={{ fill: "hsl(var(--muted-foreground))" }}
                 tickFormatter={(value) => `$${value}`}
               />
-              <Bar 
-                dataKey="income" 
-                fill="hsl(var(--finance-success))" 
+              <Bar
+                dataKey="income"
+                fill="hsl(var(--finance-success))"
                 radius={[4, 4, 0, 0]}
                 name="Income"
               />
-              <Bar 
-                dataKey="expenses" 
-                fill="hsl(var(--finance-warning))" 
+              <Bar
+                dataKey="expenses"
+                fill="hsl(var(--finance-warning))"
                 radius={[4, 4, 0, 0]}
                 name="Expenses"
               />
@@ -74,7 +91,9 @@ export function ExpenseChart() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             Expense Categories
-            <span className="text-sm font-normal text-muted-foreground">This month</span>
+            <span className="text-sm font-normal text-muted-foreground">
+              This month
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -98,8 +117,8 @@ export function ExpenseChart() {
           <div className="grid grid-cols-2 gap-2 mt-4">
             {expenseCategories.map((category, index) => (
               <div key={index} className="flex items-center gap-2 text-sm">
-                <div 
-                  className="w-3 h-3 rounded-sm" 
+                <div
+                  className="w-3 h-3 rounded-sm"
                   style={{ backgroundColor: category.color }}
                 ></div>
                 <span className="text-muted-foreground">{category.name}</span>

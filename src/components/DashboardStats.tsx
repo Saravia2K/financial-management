@@ -1,26 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Wallet, 
-  PiggyBank,
-  ArrowUpRight,
-  ArrowDownRight
-} from "lucide-react";
+import { TrendingDown, TrendingUp, Wallet } from "lucide-react";
 
 const mockData = {
-  totalBalance: 15420.50,
-  monthlyIncome: 4200.00,
+  totalBalance: 15420.5,
+  monthlyIncome: 4200.0,
   monthlyExpenses: 2850.75,
   previousMonthExpenses: 3100.25,
-  previousMonthIncome: 4000.00,
+  previousMonthIncome: 4000.0,
 };
 
 const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD'
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
   }).format(amount);
 };
 
@@ -29,15 +21,19 @@ const calculatePercentageChange = (current: number, previous: number) => {
 };
 
 export function DashboardStats() {
-  const savingsRate = ((mockData.monthlyIncome - mockData.monthlyExpenses) / mockData.monthlyIncome) * 100;
-  const expenseChange = calculatePercentageChange(mockData.monthlyExpenses, mockData.previousMonthExpenses);
-  const incomeChange = calculatePercentageChange(mockData.monthlyIncome, mockData.previousMonthIncome);
-  const netIncome = mockData.monthlyIncome - mockData.monthlyExpenses;
+  const expenseChange = calculatePercentageChange(
+    mockData.monthlyExpenses,
+    mockData.previousMonthExpenses
+  );
+  const incomeChange = calculatePercentageChange(
+    mockData.monthlyIncome,
+    mockData.previousMonthIncome
+  );
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
       {/* Total Balance */}
-      <Card className="bg-gradient-to-br from-finance-primary via-finance-primary/90 to-finance-accent text-white">
+      <Card className="bg-gradient-to-br from-finance-primary via-finance-primary/90 to-finance-accent">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-finance-primary-foreground/80">
             Total Balance
@@ -99,7 +95,6 @@ export function DashboardStats() {
           </p>
         </CardContent>
       </Card>
-
     </div>
   );
 }
