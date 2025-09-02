@@ -1,5 +1,10 @@
 "use client";
 
+import { useState } from "react";
+import { Edit, Plus, Trash2, TrendingDown, TrendingUp } from "lucide-react";
+import { useForm, SubmitHandler } from "react-hook-form";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -18,73 +23,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { useToast } from "@/hooks/use-toast";
-import { Edit, Plus, Trash2, TrendingDown, TrendingUp } from "lucide-react";
-import { useState } from "react";
+import useCategories from "@/hooks/useCategories";
+import create from "@/services/categories/create";
+import update from "@/services/categories/update";
+import deleteCategory from "@/services/categories/delete";
 
-// Mock data
-const mockIncomeCategories = [
-  {
-    id: 1,
-    name: "Job",
-    description: "Primary employment income",
-    type: "income",
-  },
-  {
-    id: 2,
-    name: "Freelance",
-    description: "Freelance project earnings",
-    type: "income",
-  },
-  {
-    id: 3,
-    name: "Investment",
-    description: "Investment returns and dividends",
-    type: "income",
-  },
-  { id: 4, name: "Business", description: "Business revenue", type: "income" },
-];
-
-const mockExpenseCategories = [
-  { id: 5, name: "Food", description: "Groceries and dining", type: "expense" },
-  {
-    id: 6,
-    name: "Transportation",
-    description: "Gas, public transport, car maintenance",
-    type: "expense",
-  },
-  {
-    id: 7,
-    name: "Utilities",
-    description: "Electricity, water, internet bills",
-    type: "expense",
-  },
-  {
-    id: 8,
-    name: "Entertainment",
-    description: "Movies, games, subscriptions",
-    type: "expense",
-  },
-  {
-    id: 9,
-    name: "Healthcare",
-    description: "Medical expenses and insurance",
-    type: "expense",
-  },
-  {
-    id: 10,
-    name: "Shopping",
-    description: "Clothing and personal items",
-    type: "expense",
-  },
-];
+const Schema = z.object({
+  name: z.string(),
+  description: z.string(),
+  type: z.union([z.literal("income"), z.literal("expense")]),
+});
+type FormFields = z.infer<typeof Schema>;
 
 export default function Categories() {
-  const [incomeCategories, setIncomeCategories] =
-    useState(mockIncomeCategories);
-  const [expenseCategories, setExpenseCategories] = useState(
-    mockExpenseCategories
-  );
+  const { categories, realoadCategories } = useCategories();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [categoryType, setCategoryType] = useState<"income" | "expense">(
@@ -92,62 +46,62 @@ export default function Categories() {
   );
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const categoryData = {
-      id: editingCategory?.id || Date.now(),
-      name: formData.get("name") as string,
-      description: formData.get("description") as string,
-      type: formData.get("type") as "income" | "expense",
-    };
+  const {
+    register,
+    setValue,
+    handleSubmit,
+    watch,
+    formState: { isSubmitting },
+    reset,
+  } = useForm({
+    resolver: zodResolver(Schema),
+    defaultValues: {
+      name: "",
+      description: "",
+      type: "income" as "income" | "expense",
+    },
+  });
 
+  const onSubmit: SubmitHandler<FormFields> = async (data) => {
     if (editingCategory) {
-      if (categoryData.type === "income") {
-        setIncomeCategories(
-          incomeCategories.map((cat) =>
-            cat.id === editingCategory.id ? categoryData : cat
-          )
-        );
-      } else {
-        setExpenseCategories(
-          expenseCategories.map((cat) =>
-            cat.id === editingCategory.id ? categoryData : cat
-          )
-        );
-      }
+      await update(editingCategory.id, data);
       toast({ title: "Category updated successfully" });
     } else {
-      if (categoryData.type === "income") {
-        setIncomeCategories([...incomeCategories, categoryData]);
-      } else {
-        setExpenseCategories([...expenseCategories, categoryData]);
-      }
+      await create(data);
       toast({ title: "Category added successfully" });
     }
 
+    realoadCategories();
     setIsDialogOpen(false);
     setEditingCategory(null);
   };
 
   const handleEdit = (category: Category) => {
     setEditingCategory(category);
+    setValue("name", category.name);
+    setValue("description", category.description);
+    setValue("type", category.type as "income" | "expense");
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: number, type: string) => {
-    if (type === "income") {
-      setIncomeCategories(incomeCategories.filter((cat) => cat.id !== id));
-    } else {
-      setExpenseCategories(expenseCategories.filter((cat) => cat.id !== id));
-    }
+  const handleDelete = async (id: number) => {
+    await deleteCategory(id);
+    realoadCategories();
     toast({ title: "Category deleted successfully" });
   };
 
   const openAddDialog = (type: "income" | "expense") => {
     setCategoryType(type);
     setEditingCategory(null);
+    setValue("type", type);
     setIsDialogOpen(true);
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      reset();
+    }
   };
 
   const CategoryCard = ({ category, onEdit, onDelete }: CategoryCardProps) => (
@@ -173,7 +127,7 @@ export default function Categories() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onDelete(category.id, category.type)}
+            onClick={() => onDelete(category.id)}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -194,37 +148,31 @@ export default function Categories() {
           </p>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
                 {editingCategory ? "Edit Category" : "Add New Category"}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
                 <Label htmlFor="name">Category Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  defaultValue={editingCategory?.name}
-                  required
-                />
+                <Input id="name" required {...register("name")} />
               </div>
               <div>
                 <Label htmlFor="description">Description</Label>
-                <Input
-                  id="description"
-                  name="description"
-                  defaultValue={editingCategory?.description}
-                  required
-                />
+                <Input id="description" required {...register("description")} />
               </div>
               <div>
                 <Label htmlFor="type">Type</Label>
                 <Select
                   name="type"
                   defaultValue={editingCategory?.type || categoryType}
+                  value={watch("type")}
+                  onValueChange={(value) =>
+                    setValue("type", value as "income" | "expense")
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
@@ -235,8 +183,17 @@ export default function Categories() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button type="submit" className="w-full" variant="finance">
-                {editingCategory ? "Update Category" : "Add Category"}
+              <Button
+                type="submit"
+                className="w-full"
+                variant="finance"
+                disabled={isSubmitting}
+              >
+                {isSubmitting
+                  ? "..."
+                  : editingCategory
+                  ? "Update Category"
+                  : "Add Category"}
               </Button>
             </form>
           </DialogContent>
@@ -266,7 +223,7 @@ export default function Categories() {
             </Button>
           </div>
           <div className="space-y-4">
-            {incomeCategories.map((category) => (
+            {categories.incomes.map((category) => (
               <CategoryCard
                 key={category.id}
                 category={category}
@@ -288,7 +245,7 @@ export default function Categories() {
             </Button>
           </div>
           <div className="space-y-4">
-            {expenseCategories.map((category) => (
+            {categories.expenses.map((category) => (
               <CategoryCard
                 key={category.id}
                 category={category}
@@ -313,5 +270,5 @@ type Category = {
 type CategoryCardProps = {
   category: Category;
   onEdit: (category: Category) => void;
-  onDelete: (id: number, type: string) => void;
+  onDelete: (id: number) => void;
 };
