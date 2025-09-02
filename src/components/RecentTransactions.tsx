@@ -57,7 +57,7 @@ export function RecentTransactions() {
   const { user } = useUser();
   const userId = user?.id ?? "";
   const { transactions, loading } = useRecentTransactions(userId, 7);
-  const { categories } = useCategories();
+  const { categories } = useCategories(userId);
 
   if (loading) {
     return <IncomeTableSkeleton />;

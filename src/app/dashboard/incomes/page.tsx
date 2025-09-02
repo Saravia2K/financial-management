@@ -72,13 +72,13 @@ const todayYYYYMMDD = () => {
 };
 
 export default function IncomePage() {
-  const { categories } = useCategories();
   const { user, loading: userLoading } = useUser();
+  const userId = user?.id ?? "";
+  const { categories } = useCategories(userId);
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingIncome, setEditingIncome] = useState<Income | null>(null);
 
-  const userId = user?.id ?? "";
   const { incomes = [], reloadIncomes, incomesLoading } = useIncomes(userId); // Si userId aún no está, pasa string vacío (no traerá nada)
 
   // --- Derived data ---
@@ -271,6 +271,7 @@ export default function IncomePage() {
                       shouldValidate: true,
                     });
                   }}
+                  required
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />

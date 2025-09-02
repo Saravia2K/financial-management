@@ -1,10 +1,11 @@
 import getAll from "@/services/categories/getAll";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
-export default function useCategories() {
+export default function useCategories(userId: string) {
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ["category"],
-    queryFn: getAll,
+    queryKey: ["category", userId],
+    queryFn: () => getAll(userId),
+    enabled: !!userId,
     placeholderData: keepPreviousData,
     staleTime: 60 * 1000,
   });

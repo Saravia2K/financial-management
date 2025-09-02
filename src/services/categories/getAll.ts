@@ -2,11 +2,12 @@ import { createClient } from "@/lib/supabase/client";
 import { serviceErrorMessage, throwUnknownServiceError } from "@/lib/utils";
 import { Category } from "@/lib/types/category";
 
-export default async function getAll() {
+export default async function getAll(userId: string) {
   const supabase = createClient();
   const { error, data } = await supabase
     .from("category")
     .select("*")
+    .eq("user_id", userId)
     .order("id", {
       ascending: true,
     });
@@ -18,7 +19,6 @@ export default async function getAll() {
   return data.reduce(
     (prevVal, currVal) => {
       prevVal[`${currVal.type}s`].push(currVal);
-
       return prevVal;
     },
     { incomes: [], expenses: [] } as Categories

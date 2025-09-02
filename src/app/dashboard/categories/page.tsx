@@ -26,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { useToast } from "@/hooks/use-toast";
 import useCategories from "@/hooks/useCategories";
+import useUser from "@/hooks/useUser";
 import create from "@/services/categories/create";
 import update from "@/services/categories/update";
 import deleteCategory from "@/services/categories/delete";
@@ -38,7 +39,8 @@ const Schema = z.object({
 type FormFields = z.infer<typeof Schema>;
 
 export default function Categories() {
-  const { categories, realoadCategories } = useCategories();
+  const { user, loading: userLoading } = useUser();
+  const { categories, realoadCategories } = useCategories(user?.id ?? "");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [categoryType, setCategoryType] = useState<"income" | "expense">(
@@ -63,17 +65,21 @@ export default function Categories() {
   });
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
-    if (editingCategory) {
-      await update(editingCategory.id, data);
-      toast({ title: "Category updated successfully" });
-    } else {
-      await create(data);
-      toast({ title: "Category added successfully" });
+    try {
+      if (!user) throw new Error("No user");
+      if (editingCategory) {
+        await update(editingCategory.id, data);
+        toast({ title: "Category updated successfully" });
+      } else {
+        await create({ ...data, user_id: user.id });
+        toast({ title: "Category added successfully" });
+      }
+      realoadCategories();
+      setIsDialogOpen(false);
+      setEditingCategory(null);
+    } catch (e) {
+      toast({ title: "Error", description: String(e), variant: "destructive" });
     }
-
-    realoadCategories();
-    setIsDialogOpen(false);
-    setEditingCategory(null);
   };
 
   const handleEdit = (category: Category) => {
@@ -136,6 +142,20 @@ export default function Categories() {
     </Card>
   );
 
+  if (userLoading) {
+    return (
+      <div className="flex justify-center items-center h-96">
+        Cargando usuario...
+      </div>
+    );
+  }
+  if (!user) {
+    return (
+      <div className="flex justify-center items-center h-96">
+        Debes iniciar sesión para ver tus categorías.
+      </div>
+    );
+  }
   return (
     <div className="container mx-auto p-6">
       <div className="flex items-center justify-between mb-6">

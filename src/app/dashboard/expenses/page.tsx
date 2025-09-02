@@ -54,7 +54,7 @@ export default function ExpensesPage() {
   const { expenses, expensesLoading, reloadExpenses } = useExpenses(
     userId ?? ""
   );
-  const { categories, categoriesLoading } = useCategories();
+  const { categories, categoriesLoading } = useCategories(userId ?? "");
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -255,6 +255,7 @@ export default function ExpensesPage() {
                       shouldValidate: true,
                     });
                   }}
+                  required
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />

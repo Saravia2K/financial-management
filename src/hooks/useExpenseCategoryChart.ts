@@ -35,7 +35,7 @@ export default function useExpenseCategoryChart(userId: string) {
   // Obtener gastos del usuario
   const { expenses, expensesLoading } = useExpenses(userId);
   // Obtener todas las categorías (incluye income y expense)
-  const { categories, categoriesLoading } = useCategories();
+  const { categories, categoriesLoading } = useCategories(userId);
 
   // Memoiza el cálculo para evitar recomputar si los datos no cambian
   const data: ExpenseCategoryChartData[] = useMemo(() => {
