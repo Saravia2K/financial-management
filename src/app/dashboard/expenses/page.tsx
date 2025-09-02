@@ -54,7 +54,7 @@ export default function ExpensesPage() {
   const { expenses, expensesLoading, reloadExpenses } = useExpenses(
     userId ?? ""
   );
-  const { categories, categoriesLoading, realoadCategories } = useCategories();
+  const { categories, categoriesLoading } = useCategories();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);

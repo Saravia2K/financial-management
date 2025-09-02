@@ -80,7 +80,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   };
 
   const onRegister = async (data: RegisterFormData) => {
-    const { confirmPassword, ...signUpData } = data;
+    const { confirmPassword: _, ...signUpData } = data;
     if (!(await signUp(signUpData))) {
       toast({
         title: "Error on registration",

@@ -82,7 +82,10 @@ export default function IncomePage() {
   const { incomes = [], reloadIncomes, incomesLoading } = useIncomes(userId); // Si userId aún no está, pasa string vacío (no traerá nada)
 
   // --- Derived data ---
-  const incomeCategories = (categories?.incomes ?? []) as Category[];
+  const incomeCategories = useMemo(
+    () => (categories?.incomes ?? []) as Category[],
+    [categories.incomes]
+  );
   const getCategoryName = (id: number | null) =>
     id
       ? incomeCategories.find((c) => c.id === id)?.name ?? "—"

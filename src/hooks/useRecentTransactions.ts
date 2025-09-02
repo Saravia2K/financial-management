@@ -1,8 +1,6 @@
 import { useMemo } from "react";
 import useIncomes from "@/hooks/useIncomes";
 import useExpenses from "@/hooks/useExpenses";
-import { Income } from "@/lib/types/income";
-import { Expense } from "@/lib/types/expense";
 
 export interface Transaction {
   id: number;
