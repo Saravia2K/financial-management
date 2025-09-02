@@ -36,7 +36,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import * as z from "zod";
 
 // ---- Schema (RHF + Zod) ----
-export const Schema = z.object({
+const Schema = z.object({
   description: z.string().min(1, "Description is required"),
   amount: z
     .unknown()
