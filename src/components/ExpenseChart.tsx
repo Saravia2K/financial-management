@@ -13,23 +13,27 @@ import {
   Cell,
 } from "recharts";
 
-const monthlyData = [
-  { month: "Jan", income: 4000, expenses: 3200 },
-  { month: "Feb", income: 4100, expenses: 2900 },
-  { month: "Mar", income: 4000, expenses: 3100 },
-  { month: "Apr", income: 4200, expenses: 2850 },
-];
+import useUser from "@/hooks/useUser";
+import useMonthlyIncomeExpenseChart from "@/hooks/useMonthlyIncomeExpenseChart";
+import useExpenseCategoryChart from "@/hooks/useExpenseCategoryChart";
+import IncomeTableSkeleton from "@/components/skeletons/IncomeTableSkeleton";
 
-const expenseCategories = [
-  { name: "Housing", value: 1200, color: "hsl(var(--finance-primary))" },
-  { name: "Food", value: 450, color: "hsl(var(--finance-accent))" },
-  { name: "Transport", value: 320, color: "hsl(var(--finance-success))" },
-  { name: "Entertainment", value: 280, color: "hsl(var(--finance-warning))" },
-  { name: "Utilities", value: 200, color: "hsl(var(--finance-muted))" },
-  { name: "Other", value: 400, color: "hsl(var(--finance-secondary))" },
-];
+// Colores fijos para las barras de ingresos y gastos
+const INCOME_COLOR = "#4ade80"; // verde
+const EXPENSE_COLOR = "#f87171"; // rojo
 
 export function ExpenseChart() {
+  const { user } = useUser();
+  const userId = user?.id ?? "";
+  const { data: monthlyData, loading: loadingMonthly } =
+    useMonthlyIncomeExpenseChart(userId);
+  const { data: expenseCategories, loading: loadingCategories } =
+    useExpenseCategoryChart(userId);
+
+  if (loadingMonthly || loadingCategories) {
+    return <IncomeTableSkeleton />;
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Income vs Expenses Chart */}
@@ -59,27 +63,32 @@ export function ExpenseChart() {
                 tick={{ fill: "hsl(var(--muted-foreground))" }}
                 tickFormatter={(value) => `$${value}`}
               />
-              <Bar
-                dataKey="income"
-                fill="hsl(var(--finance-success))"
-                radius={[4, 4, 0, 0]}
-                name="Income"
-              />
-              <Bar
-                dataKey="expenses"
-                fill="hsl(var(--finance-warning))"
-                radius={[4, 4, 0, 0]}
-                name="Expenses"
-              />
+              <Bar dataKey="income" radius={[4, 4, 0, 0]} name="Income">
+                {monthlyData.map((entry, idx) => (
+                  <Cell key={`income-bar-${idx}`} fill={INCOME_COLOR} />
+                ))}
+              </Bar>
+              <Bar dataKey="expenses" radius={[4, 4, 0, 0]} name="Expenses">
+                {monthlyData.map((entry, idx) => (
+                  <Cell key={`expense-bar-${idx}`} fill={EXPENSE_COLOR} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
+          {/* Leyenda de colores usados */}
           <div className="flex items-center justify-center gap-6 mt-4 text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-sm bg-finance-success"></div>
+              <div
+                className="w-3 h-3 rounded-sm"
+                style={{ backgroundColor: INCOME_COLOR }}
+              ></div>
               <span>Income</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-sm bg-finance-warning"></div>
+              <div
+                className="w-3 h-3 rounded-sm"
+                style={{ backgroundColor: EXPENSE_COLOR }}
+              ></div>
               <span>Expenses</span>
             </div>
           </div>

@@ -1,96 +1,81 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import useUser from "@/hooks/useUser";
+import useRecentTransactions from "@/hooks/useRecentTransactions";
+import useCategories from "@/hooks/useCategories";
+import IncomeTableSkeleton from "@/components/skeletons/IncomeTableSkeleton";
 import {
   ArrowUpRight,
-  Coffee,
   ShoppingBag,
+  Coffee,
   Car,
   Home,
   Zap,
   Gamepad2,
+  PiggyBank,
+  DollarSign,
+  Briefcase,
+  Gift,
+  Heart,
+  LucideIcon,
 } from "lucide-react";
 
-const mockTransactions = [
-  {
-    id: 1,
-    type: "expense",
-    amount: 85.5,
-    description: "Grocery Shopping",
-    category: "Food",
-    date: "2024-03-15",
-    icon: ShoppingBag,
-  },
-  {
-    id: 2,
-    type: "income",
-    amount: 4200.0,
-    description: "Salary",
-    category: "Income",
-    date: "2024-03-15",
-    icon: ArrowUpRight,
-  },
-  {
-    id: 3,
-    type: "expense",
-    amount: 12.5,
-    description: "Coffee Shop",
-    category: "Food",
-    date: "2024-03-14",
-    icon: Coffee,
-  },
-  {
-    id: 4,
-    type: "expense",
-    amount: 45.0,
-    description: "Gas Station",
-    category: "Transport",
-    date: "2024-03-14",
-    icon: Car,
-  },
-  {
-    id: 5,
-    type: "expense",
-    amount: 1200.0,
-    description: "Rent Payment",
-    category: "Housing",
-    date: "2024-03-13",
-    icon: Home,
-  },
-  {
-    id: 6,
-    type: "expense",
-    amount: 89.99,
-    description: "Electric Bill",
-    category: "Utilities",
-    date: "2024-03-12",
-    icon: Zap,
-  },
-  {
-    id: 7,
-    type: "expense",
-    amount: 29.99,
-    description: "Gaming Subscription",
-    category: "Entertainment",
-    date: "2024-03-11",
-    icon: Gamepad2,
-  },
-];
+const expenseIconMap: Record<string, LucideIcon> = {
+  Food: ShoppingBag,
+  Transport: Car,
+  Utilities: Zap,
+  Housing: Home,
+  Entertainment: Gamepad2,
+  Coffee: Coffee,
+  Other: Gift,
+  Health: Heart,
+};
+const incomeIconMap: Record<string, LucideIcon> = {
+  Salary: DollarSign,
+  Bonus: Gift,
+  Investment: PiggyBank,
+  Business: Briefcase,
+  Other: ArrowUpRight,
+};
 
-const formatCurrency = (amount: number) => {
+function formatCurrency(amount: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
   }).format(amount);
-};
-
-const formatDate = (dateString: string) => {
+}
+function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
   });
-};
+}
 
 export function RecentTransactions() {
+  const { user } = useUser();
+  const userId = user?.id ?? "";
+  const { transactions, loading } = useRecentTransactions(userId, 7);
+  const { categories } = useCategories();
+
+  if (loading) {
+    return <IncomeTableSkeleton />;
+  }
+
+  function getCategoryName(
+    type: "income" | "expense",
+    categoryId: number | null
+  ) {
+    if (!categoryId) return "Other";
+    const arr = type === "income" ? categories.incomes : categories.expenses;
+    return arr.find((c) => c.id === categoryId)?.name || "Other";
+  }
+  function getIcon(type: "income" | "expense", categoryName: string) {
+    if (type === "income") return incomeIconMap[categoryName] || ArrowUpRight;
+    return expenseIconMap[categoryName] || ShoppingBag;
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -103,13 +88,16 @@ export function RecentTransactions() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {mockTransactions.map((transaction) => {
-            const IconComponent = transaction.icon;
+          {transactions.map((transaction) => {
+            const categoryName = getCategoryName(
+              transaction.type,
+              transaction.category
+            );
+            const IconComponent = getIcon(transaction.type, categoryName);
             const isIncome = transaction.type === "income";
-
             return (
               <div
-                key={transaction.id}
+                key={`${transaction.type}-${transaction.id}`}
                 className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors"
               >
                 <div className="flex items-center space-x-3">
@@ -127,7 +115,7 @@ export function RecentTransactions() {
                       {transaction.description}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {transaction.category}
+                      {categoryName}
                     </p>
                   </div>
                 </div>

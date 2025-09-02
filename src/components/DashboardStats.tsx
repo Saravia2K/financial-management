@@ -1,33 +1,39 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import useUser from "@/hooks/useUser";
+import useDashboardStats from "@/hooks/useDashboardStats";
+import IncomeTableSkeleton from "@/components/skeletons/IncomeTableSkeleton";
 
-const mockData = {
-  totalBalance: 15420.5,
-  monthlyIncome: 4200.0,
-  monthlyExpenses: 2850.75,
-  previousMonthExpenses: 3100.25,
-  previousMonthIncome: 4000.0,
-};
-
-const formatCurrency = (amount: number) => {
+function formatCurrency(amount: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
   }).format(amount);
-};
+}
 
-const calculatePercentageChange = (current: number, previous: number) => {
+function calculatePercentageChange(current: number, previous: number) {
+  if (previous === 0) return 0;
   return ((current - previous) / previous) * 100;
-};
+}
 
 export function DashboardStats() {
+  const { user } = useUser();
+  const userId = user?.id ?? "";
+  const stats = useDashboardStats(userId);
+
+  if (stats.loading) {
+    return <IncomeTableSkeleton />;
+  }
+
   const expenseChange = calculatePercentageChange(
-    mockData.monthlyExpenses,
-    mockData.previousMonthExpenses
+    stats.monthlyExpenses,
+    stats.previousMonthExpenses
   );
   const incomeChange = calculatePercentageChange(
-    mockData.monthlyIncome,
-    mockData.previousMonthIncome
+    stats.monthlyIncome,
+    stats.previousMonthIncome
   );
 
   return (
@@ -42,7 +48,7 @@ export function DashboardStats() {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-finance-primary-foreground">
-            {formatCurrency(mockData.totalBalance)}
+            {formatCurrency(stats.totalBalance)}
           </div>
           <p className="text-xs text-finance-primary-foreground/70 mt-1">
             Available funds
@@ -65,10 +71,10 @@ export function DashboardStats() {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-finance-success">
-            {formatCurrency(mockData.monthlyIncome)}
+            {formatCurrency(stats.monthlyIncome)}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            vs {formatCurrency(mockData.previousMonthIncome)} last month
+            vs {formatCurrency(stats.previousMonthIncome)} last month
           </p>
         </CardContent>
       </Card>
@@ -88,10 +94,10 @@ export function DashboardStats() {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-finance-warning">
-            {formatCurrency(mockData.monthlyExpenses)}
+            {formatCurrency(stats.monthlyExpenses)}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            vs {formatCurrency(mockData.previousMonthExpenses)} last month
+            vs {formatCurrency(stats.previousMonthExpenses)} last month
           </p>
         </CardContent>
       </Card>

@@ -3,6 +3,11 @@ import { ExpenseChart } from "@/components/ExpenseChart";
 import { RecentTransactions } from "@/components/RecentTransactions";
 
 export default function Dashboard() {
+  const date = new Date();
+  const monthYear = date.toLocaleString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
   return (
     <div className="bg-gradient-to-br from-background via-background to-finance-primary/5 p-6">
       <div className="mb-6">
@@ -10,7 +15,7 @@ export default function Dashboard() {
           Financial Dashboard
         </h1>
         <p className="text-muted-foreground">
-          Welcome back! Here&apos;s your financial overview for March 2024
+          Welcome back! Here&apos;s your financial overview for {monthYear}
         </p>
       </div>
 
