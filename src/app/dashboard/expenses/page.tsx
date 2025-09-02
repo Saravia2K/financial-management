@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,110 +17,181 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Plus, Edit, Trash2, TrendingDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import useCategories from "@/hooks/useCategories";
+import useExpenses from "@/hooks/useExpenses";
+import useUser from "@/hooks/useUser";
+import IncomeTableSkeleton from "@/components/skeletons/IncomeTableSkeleton";
+import FullScreenLoader from "@/components/skeletons/FullScreenLoader";
+import { Category } from "@/lib/types/category";
+import { Expense } from "@/lib/types/expense";
+import createExpense from "@/services/expenses/create";
+import deleteExpense from "@/services/expenses/delete";
+import updateExpense from "@/services/expenses/update";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { SubmitHandler, useForm } from "react-hook-form";
+import * as z from "zod";
 
-// Mock data
-const mockExpenseData = [
-  {
-    id: 1,
-    description: "Grocery Shopping",
-    amount: 320.5,
-    category: "Food",
-    date: "2024-03-01",
-  },
-  {
-    id: 2,
-    description: "Gas Station",
-    amount: 65.0,
-    category: "Transportation",
-    date: "2024-03-03",
-  },
-  {
-    id: 3,
-    description: "Internet Bill",
-    amount: 89.99,
-    category: "Utilities",
-    date: "2024-03-05",
-  },
-  {
-    id: 4,
-    description: "Restaurant Dinner",
-    amount: 85.0,
-    category: "Food",
-    date: "2024-03-10",
-  },
-];
+function todayYYYYMMDD() {
+  const now = new Date();
+  return now.toISOString().slice(0, 10);
+}
 
-type Expense = (typeof mockExpenseData)[number];
+const expenseSchema = z.object({
+  description: z.string().min(1, "Description is required"),
+  amount: z.number().positive("Amount must be positive"),
+  categoryId: z.number().int().optional(),
+  date: z.string().min(1, "Date is required"),
+});
+type FormFields = z.infer<typeof expenseSchema>;
 
-const expenseCategories = [
-  "Food",
-  "Transportation",
-  "Utilities",
-  "Entertainment",
-  "Healthcare",
-  "Shopping",
-  "Other",
-];
+export default function ExpensesPage() {
+  const { toast } = useToast();
+  const { user, loading: userLoading } = useUser();
+  const userId = user?.id;
+  const { expenses, expensesLoading, reloadExpenses } = useExpenses(
+    userId ?? ""
+  );
+  const { categories, categoriesLoading, realoadCategories } = useCategories();
 
-export default function Expenses() {
-  const [expenses, setExpenses] = useState(mockExpenseData);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const { toast } = useToast();
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
-  };
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<FormFields>({
+    resolver: zodResolver(expenseSchema),
+    defaultValues: {
+      description: "",
+      amount: 0,
+      categoryId: undefined,
+      date: todayYYYYMMDD(),
+    },
+  });
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const expenseData = {
-      id: editingExpense?.id || Date.now(),
-      description: formData.get("description") as string,
-      amount: parseFloat(formData.get("amount") as string),
-      category: formData.get("category") as string,
-      date: formData.get("date") as string,
+  // Set default categoryId to first category when categories change
+  useEffect(() => {
+    if (categories.expenses.length > 0) {
+      setValue("categoryId", categories.expenses[0].id, {
+        shouldValidate: true,
+      });
+    }
+  }, [categories.expenses, setValue]);
+
+  const totalExpensesThisMonth = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    return (expenses ?? [])
+      .filter((e) => {
+        const d = new Date(e.date);
+        return d.getFullYear() === y && d.getMonth() === m;
+      })
+      .reduce((sum, e) => sum + e.amount, 0);
+  }, [expenses]);
+
+  // --- Handlers ---
+  const onSubmit: SubmitHandler<FormFields> = async (data) => {
+    if (!userId) return;
+    const payload = {
+      description: data.description.trim(),
+      amount: data.amount,
+      category: data.categoryId!, // always set by form
+      date: data.date,
+      user_id: userId,
     };
 
     if (editingExpense) {
-      setExpenses(
-        expenses.map((exp) =>
-          exp.id === editingExpense.id ? expenseData : exp
-        )
-      );
+      await updateExpense(editingExpense.id, payload);
       toast({ title: "Expense updated successfully" });
     } else {
-      setExpenses([...expenses, expenseData]);
+      await createExpense(payload);
       toast({ title: "Expense added successfully" });
     }
 
+    await reloadExpenses();
     setIsDialogOpen(false);
     setEditingExpense(null);
+    reset({
+      description: "",
+      amount: 0,
+      categoryId: undefined,
+      date: todayYYYYMMDD(),
+    });
+  };
+
+  const openAddDialog = () => {
+    setEditingExpense(null);
+    reset({
+      description: "",
+      amount: 0,
+      categoryId: categories.expenses[0]?.id,
+      date: todayYYYYMMDD(),
+    });
+    setIsDialogOpen(true);
   };
 
   const handleEdit = (expense: Expense) => {
     setEditingExpense(expense);
+    reset({
+      description: expense.description,
+      amount: expense.amount,
+      categoryId: expense.category,
+      date: expense.date,
+    });
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    setExpenses(expenses.filter((exp) => exp.id !== id));
+  const handleDelete = async (id: number) => {
+    await deleteExpense(id);
+    await reloadExpenses();
     toast({ title: "Expense deleted successfully" });
   };
 
-  const totalExpenses = expenses.reduce(
-    (sum, expense) => sum + expense.amount,
-    0
-  );
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      setEditingExpense(null);
+      reset({
+        description: "",
+        amount: 0,
+        categoryId: categories.expenses[0]?.id,
+        date: todayYYYYMMDD(),
+      });
+    }
+  };
 
+  function formatCurrency(amount: number) {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount);
+  }
+
+  function getCategoryName(categoryId: number | null) {
+    const cat = categories.expenses.find((c: Category) => c.id === categoryId);
+    return cat ? cat.name : "Unknown";
+  }
+
+  if (userLoading) {
+    return <FullScreenLoader />;
+  }
+  if (!userId) {
+    return <div className="p-6">No hay usuario autenticado.</div>;
+  }
+  if (expensesLoading) {
+    return <IncomeTableSkeleton />;
+  }
+  if (categoriesLoading) {
+    return <div className="p-6">Cargando categorías...</div>;
+  }
   return (
     <div className="container mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
@@ -133,67 +204,92 @@ export default function Expenses() {
           </p>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="finance" onClick={() => setEditingExpense(null)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Expense
-            </Button>
-          </DialogTrigger>
+        <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
+          <Button variant="finance" onClick={openAddDialog}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Expense
+          </Button>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
                 {editingExpense ? "Edit Expense" : "Add New Expense"}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
                 <Label htmlFor="description">Description</Label>
-                <Input
-                  id="description"
-                  name="description"
-                  defaultValue={editingExpense?.description}
-                  required
-                />
+                <Input id="description" {...register("description")} required />
+                {errors.description && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {errors.description.message}
+                  </p>
+                )}
               </div>
+
               <div>
                 <Label htmlFor="amount">Amount</Label>
                 <Input
                   id="amount"
-                  name="amount"
                   type="number"
                   step="0.01"
-                  defaultValue={editingExpense?.amount}
+                  inputMode="decimal"
+                  {...register("amount", { valueAsNumber: true })}
                   required
                 />
+                {errors.amount && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {errors.amount.message}
+                  </p>
+                )}
               </div>
+
               <div>
                 <Label htmlFor="category">Category</Label>
-                <Select name="category" defaultValue={editingExpense?.category}>
+                <Select
+                  value={String(
+                    watch("categoryId") ?? categories.expenses[0]?.id ?? ""
+                  )}
+                  onValueChange={(val) => {
+                    setValue("categoryId", Number(val), {
+                      shouldValidate: true,
+                    });
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {expenseCategories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
+                    {categories.expenses.map((c: Category) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+
               <div>
                 <Label htmlFor="date">Date</Label>
-                <Input
-                  id="date"
-                  name="date"
-                  type="date"
-                  defaultValue={editingExpense?.date}
-                  required
-                />
+                <Input id="date" type="date" {...register("date")} required />
+                {errors.date && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {errors.date.message}
+                  </p>
+                )}
               </div>
-              <Button type="submit" className="w-full" variant="finance">
-                {editingExpense ? "Update Expense" : "Add Expense"}
+
+              <Button
+                type="submit"
+                className="w-full"
+                variant="finance"
+                disabled={isSubmitting}
+              >
+                {isSubmitting
+                  ? "..."
+                  : editingExpense
+                  ? "Update Expense"
+                  : "Add Expense"}
               </Button>
             </form>
           </DialogContent>
@@ -210,7 +306,7 @@ export default function Expenses() {
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-bold text-finance-warning">
-            {formatCurrency(totalExpenses)}
+            {formatCurrency(totalExpensesThisMonth)}
           </div>
         </CardContent>
       </Card>
@@ -222,8 +318,8 @@ export default function Expenses() {
             <CardContent className="flex items-center justify-between p-4">
               <div className="flex-1">
                 <h3 className="font-semibold">{expense.description}</h3>
-                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                  <span>Category: {expense.category}</span>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                  <span>Category: {getCategoryName(expense.category)}</span>
                   <span>
                     Date: {new Date(expense.date).toLocaleDateString()}
                   </span>
