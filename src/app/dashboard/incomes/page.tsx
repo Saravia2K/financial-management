@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -80,6 +81,13 @@ export default function IncomePage() {
   const userId = user?.id ?? "";
   const { incomes = [], reloadIncomes, incomesLoading } = useIncomes(userId); // Si userId aún no está, pasa string vacío (no traerá nada)
 
+  // --- Derived data ---
+  const incomeCategories = (categories?.incomes ?? []) as Category[];
+  const getCategoryName = (id: number | null) =>
+    id
+      ? incomeCategories.find((c) => c.id === id)?.name ?? "—"
+      : "Uncategorized";
+
   // --- RHF setup ---
   const {
     register,
@@ -93,17 +101,17 @@ export default function IncomePage() {
     defaultValues: {
       description: "",
       amount: 0,
-      categoryId: null,
+      categoryId: undefined,
       date: todayYYYYMMDD(),
     },
   });
 
-  // --- Derived data ---
-  const incomeCategories = (categories?.incomes ?? []) as Category[];
-  const getCategoryName = (id: number | null) =>
-    id
-      ? incomeCategories.find((c) => c.id === id)?.name ?? "—"
-      : "Uncategorized";
+  // Set default categoryId to first category when categories change
+  useEffect(() => {
+    if (incomeCategories.length > 0) {
+      setValue("categoryId", incomeCategories[0].id, { shouldValidate: true });
+    }
+  }, [incomeCategories, setValue]);
 
   const totalIncomeThisMonth = useMemo(() => {
     const now = new Date();
@@ -252,25 +260,19 @@ export default function IncomePage() {
               <div>
                 <Label htmlFor="category">Category</Label>
                 <Select
-                  value={
-                    watch("categoryId") === null
-                      ? "none"
-                      : String(watch("categoryId"))
-                  }
+                  value={String(
+                    watch("categoryId") ?? incomeCategories[0]?.id ?? ""
+                  )}
                   onValueChange={(val) => {
-                    if (val === "none")
-                      setValue("categoryId", null, { shouldValidate: true });
-                    else
-                      setValue("categoryId", Number(val), {
-                        shouldValidate: true,
-                      });
+                    setValue("categoryId", Number(val), {
+                      shouldValidate: true,
+                    });
                   }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Uncategorized</SelectItem>
                     {incomeCategories.map((c) => (
                       <SelectItem key={c.id} value={String(c.id)}>
                         {c.name}
