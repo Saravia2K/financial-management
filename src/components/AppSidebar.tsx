@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
-import { LayoutDashboard, TrendingUp, TrendingDown, Tags } from "lucide-react";
+import {
+  LayoutDashboard,
+  TrendingUp,
+  TrendingDown,
+  Tags,
+  LogOut,
+} from "lucide-react";
 
 import {
   Sidebar,
@@ -22,6 +28,7 @@ const navigationItems = [
   { title: "Income", url: "/dashboard/income", icon: TrendingUp },
   { title: "Expenses", url: "/dashboard/expenses", icon: TrendingDown },
   { title: "Categories", url: "/dashboard/categories", icon: Tags },
+  { title: "Sign out", url: "/auth/logout", icon: LogOut },
 ];
 
 export function AppSidebar() {
